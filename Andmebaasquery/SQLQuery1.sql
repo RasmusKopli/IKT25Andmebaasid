@@ -154,3 +154,5 @@ Select * from Person order by Name
 Select top 3 * from Person
 
 
+--kolm esimest, aga tabeli järjestus on Age ja siis on name
+Select top 3 Age, Name from Person
