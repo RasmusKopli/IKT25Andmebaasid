@@ -296,8 +296,42 @@ order by City
 select count(*) from Employees
 
 --Mitu töötajat on soo ja linna kaupa töötamas
-select City, Gender, sum(cast(Salary as Int)) as TotalSalary, count(*) as TotalEmployees
+select City, Gender, sum(cast(Salary as Int)) as TotalSalary, 
+count(Id) as [TotalEmployee(s)]
 from Employees
-group by City, Gender
-order by City, Gender
+group by Gender, City
 
+--Kuvab kas naised või mehed linnade kaupa
+--Kasutage where
+select City, Gender, sum(cast(Salary as Int)) as TotalSalary, 
+count(Id) as [TotalEmployee(s)]
+from Employees
+Where Gender = 'Male'
+group by Gender, City
+
+--Sama tulemus nagu eelmine kord, aga kasutage Having
+select City, Gender, sum(cast(Salary as Int)) as TotalSalary, 
+count(Id) as [TotalEmployee(s)]
+from Employees
+group by Gender, City
+Having Gender = 'Male'
+
+--Kõik kes teenivad rohkem, kui 4000
+select * from Employees where sum(cast(Salary as Int)) > 4000
+
+--teeme variandi, kus saame tulemuse
+select Gender, City, sum(cast(Salary as Int)) as TotalSalary, 
+count(Id) as [TotalEmployee(s)]
+from Employees
+group by Gender, City
+Having sum(cast(Salary as int)) > 4000
+
+--Loome tabeli, milles hakatakse automaatselt nummerdama Id-d
+create table Test1
+(
+Id int identity(1,1),
+Value nvarchar(20)
+)
+
+Insert into Test1 Values('X')
+Select * from Test1
