@@ -335,3 +335,82 @@ Value nvarchar(20)
 
 Insert into Test1 Values('X')
 Select * from Test1
+
+--Kustutame veeru nimega City Employee tabelist
+Alter table Employees
+Drop column City
+
+--Inner join
+--kuvab neid, kellel on DepartmentName all olemas v‰‰rtus
+--mitte kattuvad read eemaldatakse tulemusest
+--ja sellep‰rast ei n‰idata Jamesi ja Russelit
+--Kuna neil on DepartmentId NULL
+select Name, gender, Salary, DepartmentName
+from Employees
+inner join Department
+on Employees.DepartmentId = Department.Id
+
+--left join
+select Name, gender, Salary, DepartmentName
+from Employees
+left join Department --vıib kasutada ka LEFT OUTER JOIN-i
+on Employees.DepartmentId = Department.Id
+--n‰itab anmdeid, kus vasakpoolsest tabelist isegi, siis kui seal puudub
+--vıırvıtme reas v‰‰rtus
+
+--Right join
+select Name, gender, Salary, DepartmentName
+from Employees
+Right join Department --vıib kasutada ka RIGHT OUTER JOIN-i
+on Employees.DepartmentId = Department.Id
+--right join n‰itab paremas (Department) tabelis olevaid v‰‰rtuseid,
+--mis ei ¸hti vasaku (Employees) tabeliga
+
+--Outer join
+select Name, gender, Salary, DepartmentName
+from Employees
+full outer join Department
+on Employees.DepartmentId = Department.Id
+--mılemad tabeli read kuvab
+
+--teha cross join
+select Name, gender, Salary, DepartmentName
+from Employees
+cross join Department
+--Korrutab kıik omavahel l‰bi
+
+--teha left join, kus Employees tabelist DepartmentId on NULL
+select Name, gender, Salary, DepartmentName
+from Employees
+left join Department
+on Employees.DepartmentId = Department.Id
+where Employees.DepartmentId Is null
+
+--Teine variant ja sama tulemus
+select Name, gender, Salary, DepartmentName
+from Employees
+left join Department
+on Employees.DepartmentId = Department.Id
+where Department.Id Is NULL
+--n‰itab ainult neid, kellel on vasakus tablis (Employees)
+--DepartmentId NULL
+
+select Name, gender, Salary, DepartmentName
+from Employees
+right join Department
+on Employees.DepartmentId = Department.Id
+where Employees.DepartmentId Is NULL
+--N‰itab ainult paremas tabelis olevat rida,
+--mis ei kattu Employees-ga
+
+--Full join
+--Mılema tabeli mitte-kattuvate v‰‰rtustega
+select Name, gender, Salary, DepartmentName
+from Employees
+full join Department
+on Employees.DepartmentId = Department.Id
+where Employees.DepartmentId is NULL
+or Department.Id is NULL
+
+
+
