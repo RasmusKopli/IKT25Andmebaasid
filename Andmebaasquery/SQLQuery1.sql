@@ -412,5 +412,23 @@ on Employees.DepartmentId = Department.Id
 where Employees.DepartmentId is NULL
 or Department.Id is NULL
 
+--Teete AdventureWorksLT2019 andmebaasile join päringuid:
+--Inner join, left join, right join, cross join ja full join
+--Tabeleid sellesse andmebaasi juurde ei tohi teha
+
+--Mõnikord peab muutuja ette kirjutama tabeli nimetuse nagu on Product.Name,
+--et editor saaks aru, et kumma tabeli muutujat soovitakse kasutada ja ei tekikst
+--segadust
+Select Product.Name as [Product Name], ProductNumber, ListPrice, 
+ProductModel.Name as [Product Model Name], 
+Product.ProductModelId,ProductModel.ProductModelId
+--mõnikord peab ka tabeli ette kirjutama täpsustama info
+--nagu on SalesLt.Product
+from SalesLT.Product
+inner join SalesLT.ProductModel
+--Antud juhul Producti tabelis ProductModelId võõrvõti,
+--mis ProductModeli tabelis on primaarvõti
+on Product.ProductModelId = ProductModel.ProductModelId
+
 
 
