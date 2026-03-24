@@ -909,6 +909,71 @@ values (1, 'Sam', '1980-12-30 00:00:00.000'),
 (3, 'John', '1985-08-22 12:03:30.370'),
 (4, 'Sara', '1979-11-29 12:59:30.670')
 
+--kuidas võtta ühest veerust andmeid ja selle abil luua uued veerud
+
+--vaatab DoB veerust päeva ja kuvab päeva nimetuse sõnana
+select Name, DateOfBirth, DATENAME(weekday, DateOfBirth) as [Day],
+	--Vaatab DoB veerust kuupäevasid ja kuvab kuu nr
+	Month(DateOfBirth) as MonthNumber,
+	--vaatab DoB veerust kuud ja kuvab sõnana
+	DateName(Month, DateOfBirth) as [MonthName],
+	--võtab DoB veerust aasta
+	Year(DateOfBirth) as [Year]
+from EmployeesWithDates
+
+--kuvab 3 kuna USA nädal algab pühapäeval
+select DATEPART(weekday, '2026-03-24 12:59:30.670')
+--tehke sama, aga kasutage kuu-d
+select DATEPART(MONTH, '2026-03-24 12:59:30.670')
+--liidab stringis olevale kp 20 päeva juurde
+select DATEADD(day, 20 ,'2026-03-24 12:59:30.670')
+--lahutab 20 päeva maha
+select DATEADD(day, -20 ,'2026-03-24 12:59:30.670')
+--kuvab kahe stringis oleva kuudevahelist aega nr-na
+select DATEDIFF(MONTH, '11/20/2026', '01/20/2024')
+--tehke sama, aga kasutage aastat
+select DATEDIFF(YEAR, '11/20/2026', '01/20/2028')
+
+--alguses uurite mis on funktsioon MS SQL
+-- Andmebaasifunktsioonid on SQL-käskude kogum,
+-- mida kasutatakse konkreetsete andmebaasitehingute tegemiseks.
+-- Eelkirjutatud toimingud, salvestatud tegevus
+
+--miks seda vaja on
+-- Pakkuda DB-s koduvkasutatud funktsionaalsust
+
+--mis on selle eelised ja puudused
+--Eelised
+	-- Saad kiiresti kasutada toiminguid ja ei pea uuesti koodi kirjutama
+--Puudused
+	--Funktsioon ei tohi muuta DB olekut
+
+create function fnComputeAge(@DOB datetime)
+returns nvarchar(50)
+as begin
+	declare @tempdate datetime, @years int, @months int, @days int
+	select @tempdate = @DOB
+
+	select @years = DATEDIFF(year, @tempdate, getdate()) - case when (month(@DOB) >
+	month(GETDATE())) or (month(@DOB) = month(GETDATE()) and DAY(@DOB) > day(getdate()))
+	then 1 else 0 end
+	select @tempdate = DATEADD(year, @years, @tempdate)
+
+	select @months = DATEDIFF(month, @tempdate, getdate()) - case when day(@DOB) > day(GETDATE())
+	then 1 else 0 end
+	select @tempdate = DATEADD(month, @months, @tempdate)
+
+	select @days = DATEDIFF(day, @tempdate, GETDATE())
+
+	declare @Age nvarchar(50)
+		set @Age = CAST(@years as nvarchar(4)) + 'Years ' + CAST(@months as nvarchar(2)) 
+		+ 'Months ' + CAST(@days as nvarchar(2)) + 'Days old '
+	return @Age
+end
+
+select Id, Name, DateOfBirth, dbo.fnComputeAge(DateOfBirth) as Age from EmployeesWithDates
+
+
 
 
 
