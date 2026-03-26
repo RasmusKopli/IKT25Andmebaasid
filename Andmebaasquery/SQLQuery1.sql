@@ -973,6 +973,100 @@ end
 
 select Id, Name, DateOfBirth, dbo.fnComputeAge(DateOfBirth) as Age from EmployeesWithDates
 
+--
+select SalesLT.ProductModel.ProductModelID, SalesLT.ProductModel.rowguid, SalesLT.ProductModel.ModifiedDate
+from SalesLT.ProductModel
+left join SalesLT.ProductModelProductDescription
+on SalesLT.ProductModelProductDescription.ProductModelID = SalesLT.ProductModel.ProductModelID
+
+--
+select SalesLT.Address.AddressID, SalesLT.Address.rowguid, SalesLT.Address.ModifiedDate
+from SalesLT.Address
+Right join SalesLT.CustomerAddress
+on SalesLT.CustomerAddress.AddressID = SalesLT.Address.AddressID
+
+--
+select SalesLT.SalesOrderHeader.SalesOrderID, SalesLT.SalesOrderHeader.rowguid, SalesLT.SalesOrderHeader.ModifiedDate
+from SalesLT.SalesOrderHeader
+Inner Join SalesLT.SalesOrderDetail
+on SalesLT.SalesOrderDetail.SalesOrderID = SalesLT.SalesOrderHeader.SalesOrderID
+
+--
+select SalesLT.Product.ProductCategoryID
+from SalesLT.Product
+full outer join SalesLT.ProductCategory
+on SalesLT.ProductCategory.ProductCategoryID = SalesLT.Product.ProductCategoryID
+
+--
+select SalesLT.Customer.CustomerID
+from SalesLT.Customer
+cross join SalesLT.CustomerAddress
+
+
+create procedure spGetAllCustomers
+as begin
+	select CustomerID, Title, FirstName, LastName from SalesLT.Customer
+end
+
+execute spGetAllCustomers
+
+create proc spGetCustomerById
+@CustomerID int
+as begin
+	select FirstName, LastName, EmailAddress from SalesLT.Customer
+end
+
+execute spGetCustomerById 1
+
+create proc spGetOrdersByDateRange
+@StartDate date,
+@EndDate date
+as begin
+	select OrderDate from SalesLT.SalesOrderHeader
+end
+
+declare @StartDate date, @EndDate date
+execute spGetOrdersByDateRange @StartDate 2008-06-13 00:00:00.000, @EndDate 2009-06-13 00:00:00.000
+
+create proc spAddNewProduct
+@Name nvarchar(30),
+@ProductNumber int,
+@ListPrice int,
+@StandardCost int,
+@SellStartDate = getdate()
+as begin
+	insert into SalesLT.Product values (@Name, @ProductNumber, @ListPrice, @StandardCost, @SellStartDate)
+end
+
+create proc spUpdateProductPrice
+@ProductNumber int,
+@NewPrice int
+as begin
+	update SalesLT.Product set ListPrice = @NewPrice
+	where ProductID = @ProductNumber
+end
+
+create proc spDeleteCustomer
+as begin
+	delete from SalesLT.Customer where CustomerID not in (select) 
+end
+
+
+
+create proc spGetOrderCountByCustomer
+@CustomerID
+as begin
+	
+end
+
+
+
+
+
+
+
+
+
 
 
 
