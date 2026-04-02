@@ -1138,13 +1138,180 @@ select Id, Name, dbo.CalculateAge(DateOfBirth) as Age from EmployeesWithDates
 where dbo.CalculateAge(DateOfBirth) > 36
 
 
+--inline table valued functions
+alter table EmployeesWithDates
+add DepartmentId int
+alter table EmployeesWithDates
+add Gender nvarchar(10)
+
+select * from EmployeesWithDates
+
+update EmployeesWithDates
+set DepartmentId = 1, Gender = 'Male'
+where Id = 1
+
+update EmployeesWithDates
+set DepartmentId = 2, Gender = 'Female'
+where Id = 2
+
+update EmployeesWithDates
+set DepartmentId = 1, Gender = 'Male'
+where Id = 3
+
+update EmployeesWithDates
+set DepartmentId = 3, Gender = 'Female'
+where Id = 4
+
+insert into EmployeesWithDates(Id, Name, DateOfBirth, DepartmentId, Gender)
+values (5, 'Todd', '1978-11-29 12:59:30.670', 1, 'Male')
+
+--scalar function annab mingis vahemikus olevaid andmeid,
+--inline table values ei kasuta begin ja end funktsioone
+--scalar annab väärtused ja inline annab tabeli
+create function fn_EmployeesByGender(@Gender nvarchar(10))
+returns table
+as
+return (select Id, Name, DateOfBirth, DepartmentId, Gender
+		from EmployeesWithDates
+		where Gender = @Gender)
+
+--Kuidas leida kõik naised tabelis EmployeesWithDates
+-- ja kaustada funktsiooni fn_EmployeesByGender
+select * from fn_EmployeesByGender('Female')
+
+--tahaks ainult Pami nime näha
+select * from fn_EmployeesByGender('Female') where Name = 'Pam'
+
+select * from Department
+
+--kahest erinevast tabelist andmete võtmine ja koos kuvamine
+--Esimene on funktsioon ja teine tabel
+
+select Name, Gender, DepartmentName
+from fn_EmployeesByGender('Male') E
+join Department D on D.Id = E.DepartmentId
+
+--Multi tabel statement
+--inline funktsioon
+create function fn_GetEmployees()
+returns table as
+return (select Id, Name, CAST(DateOfBirth as date)
+		as DOB
+		from EmployeesWithDates)
+
+select * from fn_GetEmployees()
+
+--multi-state puhul peab defineerima uue tabeli veerud koos muutujatega
+--funktsiooni nimi on fn_MS_GetEmployees()
+--peab edastama meile Id, Name, DOB tabelist EmployeesWithDates
+create function fn_MS_GetEmployees()
+returns @Table table (Id int, Name nvarchar(20), DOB date)
+as begin
+	insert into @Table
+	select Id, Name, CAST(DateOfBirth as date) from EmployeesWithDates
+	return
+end
+
+select * from fn_MS_GetEmployees()
+
+--inline tabeli funktsioonid on paremini töötamas kuna käsitletakse vaatena
+--multi puhul on pm tegemist stored proceduriga ja kulutab ressurssi rohkem
+
+--muudame andmeid ja vaatame, kas inline funktsioonis on muutused kajastatud
+update fn_GetEmployees() set Name = 'Sam1' where Id = 1
+select * from fn_GetEmployees() --saab muuta andmeid
+
+update fn_MS_GetEmployees set Name = 'Sam2' where Id = 1
+--ei saa muuta andmeid multi state funktsioonis,
+--kuna see on nagu stored procedure
+
+--deterministic vs non-deterministic functions
+--deterministic funktsioonid annavad alati sama tulemuse, kui sisend on sama
+select COUNT(*) from EmployeesWithDates
+select SQUARE(4)
+
+--non-deterministic funktsioonid annavad erineva tulemuse, kui sisend on sama
+select getdate()
+select CURRENT_TIMESTAMP
+select RAND()
 
 
+--Ülesanded
+create function fn_GetAllCustomers_ITVF()
+returns table as
+return (select * from SalesLT.Customer)
 
+select * from fn_GetAllCustomers_ITVF()
 
+create function fn_GetCustomerByID_ITVF(@CustomerID int)
+returns table as
+return (select CustomerID, FirstName, LastName from SalesLT.Customer where (CustomerID = @CustomerID))
 
+select * from fn_GetCustomerByID_ITVF(1)
 
+create function fn_GetOrdersByCustomer_ITVF(@CustomerID int)
+returns table as
+return (select * from SalesLT.SalesOrderHeader where (@CustomerID = CustomerID))
 
+select * from fn_GetOrdersByCustomer_ITVF(30019)
+
+create function fn_GetProductsByPrice_ITVF(@MinPrice int, @MaxPrice int)
+returns table as
+return (select * from SalesLT.Product where (ListPrice between @MinPrice and @MaxPrice))
+
+select * from fn_GetProductsByPrice_ITVF(100, 500)
+
+create function fn_GetTopExpensiveProducts_ITVF()
+returns table as
+return (select top 10 * from SalesLT.Product order by ListPrice)
+
+select * from fn_GetTopExpensiveProducts_ITVF()
+
+create function fn_GetCustomerFullInfo_MSTVF(@CustomerID int)
+returns @Result table (CustomerID int, Name nvarchar(50), Email nvarchar(50), Phone nvarchar(15))
+as begin
+	insert into @Result
+	select CustomerID, coalesce(FirstName, LastName) as Name, EmailAddress, Phone from SalesLT.Customer where (@CustomerID = CustomerID)
+	return
+end
+
+select * from fn_GetCustomerFullInfo_MSTVF(1)
+
+create function fn_GetProductOrderSummary_MSTVF(@CustomerID int)
+returns @Result table (CustomerID int, TotalDue int)
+as begin
+	insert into @Result
+	select CustomerID, TotalDue from SalesLT.SalesOrderHeader where (@CustomerID = CustomerID)
+	return
+end
+
+select * from fn_GetProductOrderSummary_MSTVF
+
+create function fn_GetProductPriceCategory_MSTVF
+returns @Result table (Name nvarchar(50), ListPrice int)
+as begin
+	insert into @Result
+	select Name, ListPrice from SalesLT.Product
+		if (ListPrice > 150, 'Odav', '')
+
+Create function fn_GetTopCustomersBySpending_MSTVF
+returns @Result Table
+(
+	CustomerID int,
+	FullName nvarchar(200),
+	TotalSpent MONEY
+)
+as begin
+	insert into @Result
+	select TOP 5
+	c.CustomerID, c.FirstName + ' ' + c.LastName, SUM(soh.TotalDue)
+	from SalesLT.Customer c
+	join SalesLT.SalesOrderHeader soh
+		on c.CustomerID = soh.CustomerID
+	Group by c.CustomerID, c.FirstName, c.LastName
+	order by TotalSpent DESC;
+	return
+end
 
 
 
